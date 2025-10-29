@@ -19,6 +19,8 @@ v1Indices: the qubit indices of the first vertex (length = m where m is the numb
 v2Indices: the qubit indices of the second vertex (length = m where m is the number of bits in the binary representation of the vertex index)
 resIndices: the qubit indices of the intermediate results (length = e where e is the number of edges in the edge set E)
 resIndex: the qubit index of the result
+
+returns: None (directly modifies the input quantum circuit qc)
 """
 
 def check(qc: QuantumCircuit, edges: Edges, v1Indices: List[int], v2Indices: List[int], resIndices: List[int], resIndex: int) -> None:
@@ -69,17 +71,100 @@ def check(qc: QuantumCircuit, edges: Edges, v1Indices: List[int], v2Indices: Lis
     qc.barrier()
     # next we apply X on resIndex
     qc.x(resIndex)
+    
+    # now inverse everything except for resIndex
+
+    for i in range(len(resIndices)):
+        qc.x(resIndices[i])
+
+    qc.barrier()
+    for edgeIndex, edge in enumerate(reversed(edges)):
+        x, y = edge
+
+        xBin = bin(x)[2:].zfill(M) # padded binary representation of x
+        yBin = bin(y)[2:].zfill(M) # padded binary representation of y
+
+        # apply X when the binary is 0 
+        for i, c in enumerate(xBin):
+            if c == '0':
+                qc.x(v1Indices[i])
+        
+        for i, c in enumerate(yBin):
+            if c == '0':
+                qc.x(v2Indices[i])
+
+
+        qc.barrier()
+        # apply MCX on all of v1Indices and v2Indices, with target on resIndices[edgeIndex]
+        print(v1Indices + v2Indices, resIndices[edgeIndex])
+        qc.mcx(v1Indices + v2Indices, resIndices[edgeIndex])
+
+        qc.barrier()
+        # now we apply the X's again to flip the qubits back
+        for i, c in enumerate(xBin):
+            if c == '0':
+                qc.x(v1Indices[i])
+        
+        for i, c in enumerate(yBin):
+            if c == '0':
+                qc.x(v2Indices[i])
+
+
+
+
+
+"""
+Assumes specific ordering of qubits:
+v1...vN take up first N * M qubits
+re_i take up next len(edges) qubits
+res_check takes up the last qubit
+
+for a total of N*(M+1) + len(edges) + 1 qubits
+
+"""
+def checkAll(qc: QuantumCircuit, edges: Edges) -> None:
+
+
+    RES_EDGES_START_INDEX = N * M
+    RES_EDGES_END_INDEX = RES_EDGES_START_INDEX + len(edges) - 1
+    
+    
+    RES_EDGE_INDICES = list(range(RES_EDGES_START_INDEX, RES_EDGES_END_INDEX + 1))
+    RES_INDICES = list(range(RES_EDGES_END_INDEX + 1, RES_EDGES_END_INDEX + N + 1))
+    
+    CHECK_INDEX = RES_EDGES_END_INDEX + N + 1
+    # iterate over the pairs
+
+    for i in range(N - 1):
+
+        v1Indices = [i * M + j for j in range(M)]
+        v2Indices = [(i + 1) * M + j for j in range(M)]
+        RES_INDEX = RES_EDGES_END_INDEX + i + 1
+
+        check(qc, edges, v1Indices, v2Indices, RES_EDGE_INDICES, RES_INDEX)
+
+        qc.barrier()
+        qc.barrier()
+
+    # check vn -> v1
+    v1Indices = [(N - 1) * M + j for j in range(M)]
+    v2Indices = [0 * M + j for j in range(M)]
+    RES_INDEX = RES_EDGES_END_INDEX + N
+    check(qc, edges, v1Indices, v2Indices, RES_EDGE_INDICES, RES_INDEX)
+
+    qc.barrier()
+    qc.barrier()
+    qc.mcx(RES_INDICES, CHECK_INDEX)
 
 # test case
 
 edges = [(0, 1), (1, 2)]
 
-# for now we just test two vertices
-# 2 * 2 + 2 + 1 = 7
-qc = QuantumCircuit(2 * M + len(edges) + 1)
+qc = QuantumCircuit(N * M + len(edges) + N + 1)
 
-print(qc.draw())
 
-check(qc, edges, [0, 1], [2, 3], [4, 5], 6)
+checkAll(qc, edges)
 
-print(qc.draw())
+qc.draw(output="mpl", filename="edgeCheckingCircuit.png", fold=-1)
+# print(qc.draw(fold=-1))
+
