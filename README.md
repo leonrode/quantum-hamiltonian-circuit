@@ -1,6 +1,6 @@
 # quantum-hamiltonian-circuit
 
-The goal of this project is to create a full stack application enabling a user to input a small graph, and dynamically create a quantum circuit (oracle included) that determines if a Hamilton circuit exists in the graph using Grover's search.
+The goal of this project is to create a full stack application enabling a user to input a small graph, and dynamically create a quantum circuit (oracle included) that determines if a Hamiltonian circuit exists in the graph using Grover's search. This is an exploration of how quantum search can speed up NP-complete problems by providing quadratic speed-up over classical brute force.
 
 ## todo
 
