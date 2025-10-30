@@ -19,7 +19,16 @@ The goal of this project is to create a full stack application enabling a user t
     - [ ] web dev magic w/ drag and drop nodes (on the order of 5 vertices max depending on how # qubits grows w.r.t V, E)
 
 
+# Edge Checking
+## Iteration 1
+
 ![Circuit for edge checking](edgeCheckingCircuit.png)
-The image shows the circuit for a graph for $e=2$ edges with an input of $n=2$ vertices ($m=1$ bits each), corresponding to $m*n + n + e+1=n(m+1)+e+1$ qubits.
+The image shows the circuit for a graph for $e=2$ edges with an input of $n=2$ vertices ($m=1$ bits each), corresponding to $m*n + n + e+1=n(m+1)+e+1$ qubits. There are 38 (non-barrier) gates. 
 
+For each $Check$ operation which checks the validity of proposed edge $(v_i, v_j)$ we have to return the register `edgeResultQubits` back to the original state for the next pair $(v_{i+1}, v_{j+1})$ to be checked (reducing ancillas). Thus we are trading the need for more qubits for a longer circuit. Since $Check$ is just one of a few subroutines in the oracle, we should investigate shortening the length of the circuit. Later subroutines will want to reuse a subset of the qubits for their own purpose. Thus we explore mid-circuit measurements and qubit resets as as possible avenue for both shortening the length of the circuit as well as reducing the number of ancillas.
 
+## Iteration 2
+
+![Circuit for edge checking iteration 2](edgeCheckingCircuitit2.png)
+
+This (dynamic) circuit includes mid-circuit resets on all `edgeResultQubits` between each pair of vertices (i.e. edge) being checked. This circuit now uses 26 gates, a 32% reduction in gates for the same number of ancillas.

@@ -61,7 +61,7 @@ def check(qc: QuantumCircuit, edges: Edges, v1Indices: List[int], v2Indices: Lis
         for i, c in enumerate(yBin):
             if c == '0':
                 qc.x(v2Indices[i])
-        qc.barrier()
+        qc.barrier(label=f"<- edge {edge}")
 
     # next apply X on all resIndices
     for i in range(len(resIndices)):
@@ -70,47 +70,15 @@ def check(qc: QuantumCircuit, edges: Edges, v1Indices: List[int], v2Indices: Lis
     qc.barrier()
     # next we apply the MCX on all of resIndices, with target on resIndex
     qc.mcx(resIndices, resIndex)
+    qc.x(resIndex)
 
     qc.barrier()
     # next we apply X on resIndex
-    qc.x(resIndex)
-    
-    # now inverse everything except for resIndex
 
+    # apply reset on all resIndices
     for i in range(len(resIndices)):
-        qc.x(resIndices[i])
+        qc.reset(resIndices[i])
 
-    qc.barrier()
-    for edgeIndex, edge in enumerate(reversed(edges)):
-        x, y = edge
-
-        xBin = bin(x)[2:].zfill(M) # padded binary representation of x
-        yBin = bin(y)[2:].zfill(M) # padded binary representation of y
-
-        # apply X when the binary is 0 
-        for i, c in enumerate(xBin):
-            if c == '0':
-                qc.x(v1Indices[i])
-        
-        for i, c in enumerate(yBin):
-            if c == '0':
-                qc.x(v2Indices[i])
-
-
-        qc.barrier()
-        # apply MCX on all of v1Indices and v2Indices, with target on resIndices[edgeIndex]
-        print(v1Indices + v2Indices, resIndices[edgeIndex])
-        qc.mcx(v1Indices + v2Indices, resIndices[edgeIndex])
-
-        qc.barrier()
-        # now we apply the X's again to flip the qubits back
-        for i, c in enumerate(xBin):
-            if c == '0':
-                qc.x(v1Indices[i])
-        
-        for i, c in enumerate(yBin):
-            if c == '0':
-                qc.x(v2Indices[i])
 
 
 """
@@ -196,5 +164,6 @@ statevector = result.get_statevector()
 print(statevector)
 qc.draw(output="mpl", filename=f"edgeCheckingCircuit_{N}_{len(edges)}.png", fold=-1)
 
+print(qc.count_ops())
 
 print(ket_label_q0_first(statevector))
