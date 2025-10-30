@@ -6,8 +6,8 @@ The goal of this project is to create a full stack application enabling a user t
 
 - [ ] determine a polynomial quantum circuit (in gates) that determines if a given circuit (cycle) is a Hamilton cycle
     - [x] determine how to check if a given edge is contained in the edge set E
-    - [ ] determine how to check if ALL edges are contained in the edge set E
-    - [ ] determine how to check that no vertex is given twice in the circuit
+    - [x] determine how to check if ALL edges are contained in the edge set E
+    - [x] determine how to check that no vertex is given twice in the circuit
     - [ ] determine how to check that all vertices in the graph are in the circuit
     - [ ] determine how to check that the first vertex is also the last vertex 
     - [ ] ensure this is polynomial
