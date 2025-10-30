@@ -3,15 +3,18 @@
 # for any set of edges E, generate a quantum circuit that 
 # determines if an edge is an edge in E
 
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, QuantumRegister, transpile
 from typing import List, Tuple
 import math
+from qiskit_aer import AerSimulator
+from utils import ket_label_q0_first
+
 
 Vertex = int # v: Vertex -> {0, 1, ..., n - 1}
 Edge = Tuple[Vertex, Vertex] # e: Edge -> (v1, v2) where v1, v2: Vertex
 Edges = List[Edge]
 
-N = 4
+N = 2
 M = math.ceil(math.log2(N))
 """
 edges: the set of edges E (length = e)
@@ -110,9 +113,6 @@ def check(qc: QuantumCircuit, edges: Edges, v1Indices: List[int], v2Indices: Lis
                 qc.x(v2Indices[i])
 
 
-
-
-
 """
 Assumes specific ordering of qubits:
 v1...vN take up first N * M qubits
@@ -158,13 +158,43 @@ def checkAll(qc: QuantumCircuit, edges: Edges) -> None:
 
 # test case
 
-edges = [(0, 1), (1, 2)]
+#edges = [(0, 1), (1, 2), (2, 3)]
+edges = [(0, 1), (1, 0)]
 
-qc = QuantumCircuit(N * M + len(edges) + N + 1)
+vertexRegs = []
+for i in range(N):
+    vertexRegs.append(QuantumRegister(M, name=f"vertex{i}"))
+
+edgeResultQubits = QuantumRegister(len(edges), name="edgeResultQubits")
+resultQubits = QuantumRegister(N, name="resultQubits")
+checkQubit = QuantumRegister(1, name="checkQubit")
+
+qc = QuantumCircuit(*vertexRegs, edgeResultQubits, resultQubits, checkQubit)
+# let's simulate the circuit and ensure that it works
+
+# for example, we expect the following circuit to work:
+# (0, 1)
+# 01
+# |01>
+
+qc.x(vertexRegs[1][0])
+
+qc.barrier()
 
 
 checkAll(qc, edges)
 
-qc.draw(output="mpl", filename="edgeCheckingCircuit.png", fold=-1)
-# print(qc.draw(fold=-1))
+qc.save_statevector()
 
+sim = AerSimulator(method="statevector")
+
+compiled = transpile(qc, sim)
+
+job = sim.run(compiled)
+result = job.result()
+statevector = result.get_statevector()
+print(statevector)
+qc.draw(output="mpl", filename=f"edgeCheckingCircuit_{N}_{len(edges)}.png", fold=-1)
+
+
+print(ket_label_q0_first(statevector))

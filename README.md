@@ -20,4 +20,6 @@ The goal of this project is to create a full stack application enabling a user t
 
 
 ![Circuit for edge checking](edgeCheckingCircuit.png)
-The image shows the circuit for a graph for $e=2$ edges with an input of $n=4$ vertices ($m=2$ bits each), corresponding to $m*n + n + e+1=n(m+1)+e+1$ qubits, so $O(nm+e)$ circuit construction.
+The image shows the circuit for a graph for $e=2$ edges with an input of $n=2$ vertices ($m=1$ bits each), corresponding to $m*n + n + e+1=n(m+1)+e+1$ qubits.
+
+
